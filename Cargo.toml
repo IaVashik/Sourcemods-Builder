@@ -1,0 +1,32 @@
+[package]
+name = "sourcemods-builder"
+version = "1.0.0"
+edition = "2021"
+authors = ["laVashik <contact@lavashik.lol>"]
+description = "Sourcemod Builder is a utility designed to drastically simplify the process of building and distributing Source Engine mods"
+readme = "README.md"
+license = "MIT"
+repository = "https://github.com/IaVashik/vmf-forge"
+documentation = "https://docs.rs/vmf-forge"
+keywords = ["vmf", "valve", "map", "parser", "source"]
+categories = ["parser-implementations", "game-development"]
+
+[workspace]
+members = [
+    "gui"
+]
+
+[dependencies]
+vmf-forge = "0.2.0"
+vmdl = "0.2.0"
+clap = { version = "4.5.27", features = ["derive"] }
+walkdir = "2"
+
+log = "0.4"
+colored = "3.0.0" 
+fern = "0.7.0"
+regex = "1.11.1"
+thiserror = "2.0.11"
+
+# [lints.rust]
+# unused = { level = "allow", priority = -1 } # For exploratory dev.

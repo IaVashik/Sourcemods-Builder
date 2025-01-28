@@ -1,0 +1,23 @@
+[package]
+name = "gui"
+version = "1.0.0"
+edition = "2021"
+
+[[bin]]
+name = "sourcemods-builder-gui"
+path = "src/main.rs"       
+
+[dependencies]
+sourcemods-builder = { path="../" }
+eframe = "0.29.0" # 0.30.0 now has a critical bug with TextEdit 
+egui-theme-switch = "=0.2.1"
+rfd = "0.15"
+confy = "0.6.1"
+serde = { version = "1.0", features = ["derive"] }
+log = "0.4"
+
+[build-dependencies]
+winresource = "0.1.19"
+
+# [lints.rust]
+# unused = { level = "allow", priority = -1 } # For exploratory dev.
