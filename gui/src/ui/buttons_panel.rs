@@ -31,8 +31,7 @@ pub fn build(ui: &mut egui::Ui, app: &mut App, app_mutex: Arc<Mutex<App>>) {
                 let button = egui::Button::new("Processing...");
                 ui.add_enabled(false, button);
                 ui.add(egui::widgets::Spinner::new());
-            } 
-            else if ui.button("Start Process").clicked() {
+            } else if ui.button("Start Process").clicked() {
                 if let Err(err) = app.process_maps(app_mutex) {
                     rfd::MessageDialog::new()
                         .set_description(&err)
@@ -41,7 +40,6 @@ pub fn build(ui: &mut egui::Ui, app: &mut App, app_mutex: Arc<Mutex<App>>) {
                         .show();
                 }
             }
-        
         });
     });
 }

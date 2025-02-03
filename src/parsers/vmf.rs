@@ -1,12 +1,8 @@
 use log::{debug, trace};
-use std::{
-    fs::File,
-    io::Read,
-    path::Path,
-};
+use std::{fs::File, io::Read, path::Path};
 
 use crate::asset_processor::UniqueAssets;
-pub use vmf_forge::{vmf::world::Solid, VmfFile, VmfResult, VmfError};
+pub use vmf_forge::{vmf::world::Solid, VmfError, VmfFile, VmfResult};
 
 /// Extracts unique assets from a VMF file.
 pub fn get_uniques(path: &Path, uasset: &mut UniqueAssets) -> VmfResult<()> {

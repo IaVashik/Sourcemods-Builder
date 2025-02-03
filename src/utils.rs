@@ -1,13 +1,13 @@
 //! Utility functions module for sourcemods-builder.
 
+use colored::*;
+use fern::Dispatch;
+use regex::Regex;
 use std::{
     fs, io,
     path::{Path, PathBuf},
 };
 use walkdir::{DirEntry, WalkDir};
-use colored::*;
-use fern::Dispatch;
-use regex::Regex;
 
 /// Sets up the global logger with specified level filter.
 pub fn setup_logger(level: log::LevelFilter) -> Result<(), Box<dyn std::error::Error>> {

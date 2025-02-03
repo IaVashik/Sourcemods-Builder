@@ -1,10 +1,10 @@
 //! Core library for sourcemods-builder application.
 
 use log::error;
-use std::path::{Path, PathBuf};
 use std::fs;
-use walkdir::WalkDir;
+use std::path::{Path, PathBuf};
 use thiserror::Error;
+use walkdir::WalkDir;
 
 pub mod asset_processor;
 pub mod parsers;
@@ -33,7 +33,10 @@ pub fn check_directories(game_dir: &Path, map_dir: &Path, output_dir: &Path) -> 
         return Err("Game Dir is empty.".to_string());
     }
     if !game_dir.exists() {
-        return Err(format!("Game Dir \"{}\" doesn't exist.", game_dir.display()));
+        return Err(format!(
+            "Game Dir \"{}\" doesn't exist.",
+            game_dir.display()
+        ));
     }
 
     // Map Dir
@@ -56,7 +59,7 @@ pub fn check_directories(game_dir: &Path, map_dir: &Path, output_dir: &Path) -> 
     if !output_dir.exists() {
         fs::create_dir_all(output_dir).map_err(|e| format!("Wrong output_dir: {}", e))?;
     }
-    
+
     Ok(())
 }
 

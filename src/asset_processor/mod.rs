@@ -10,9 +10,9 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use crate::BuilderResult;
 use crate::parsers::{bsp, vmf};
 use crate::utils;
+use crate::BuilderResult;
 
 pub mod materials;
 pub mod models;

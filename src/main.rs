@@ -7,7 +7,9 @@ use log::{error, info, warn};
 
 mod config;
 use sourcemods_builder::utils;
-use sourcemods_builder::{asset_processor, check_directories, find_asset_directories, UniqueAssets};
+use sourcemods_builder::{
+    asset_processor, check_directories, find_asset_directories, UniqueAssets,
+};
 
 fn main() {
     let args = config::get_args();
@@ -30,7 +32,7 @@ fn main() {
             exit(1);
         }
     };
-     
+
     if u_assets.is_empty() {
         warn!("No available maps found in this folder.");
         exit(0)
