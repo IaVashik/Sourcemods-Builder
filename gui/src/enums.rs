@@ -1,7 +1,9 @@
 #![allow(dead_code)]
 
 use std::{
-    borrow::Cow, fmt::Display, path::{Path, PathBuf}
+    borrow::Cow,
+    fmt::Display,
+    path::{Path, PathBuf},
 };
 
 use sourcemods_builder::parsers::vmf::VmfError;
@@ -12,6 +14,7 @@ pub enum ProcessingStatus {
     ScanMaps,
     SearchAssets,
     CopyAssets,
+    CopyError(String),
 }
 
 impl Display for ProcessingStatus {
@@ -20,6 +23,7 @@ impl Display for ProcessingStatus {
             ProcessingStatus::ScanMaps => "Scanning Maps...",
             ProcessingStatus::SearchAssets => "Searching Assets...",
             ProcessingStatus::CopyAssets => "Copying Assets...",
+            ProcessingStatus::CopyError(info) => info,
         };
         write!(f, "{}", status_str)
     }

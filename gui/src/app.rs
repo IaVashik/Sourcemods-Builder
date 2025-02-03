@@ -3,6 +3,7 @@ use sourcemods_builder::{asset_processor, find_asset_directories, utils};
 use sourcemods_builder::{parsers, UniqueAssets};
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
+use std::thread::sleep;
 
 use crate::enums::{ErrorReason, Map, MapStatus, ProcessingStatus, WarningReason};
 
@@ -39,7 +40,7 @@ impl BuilderGui {
     }
 
     pub fn save_config(&self) -> Result<(), confy::ConfyError> {
-        confy::store("sourcemods_builder", "config", &self.config) 
+        confy::store("sourcemods_builder", "config", &self.config)
     }
 
     pub fn add_map(&mut self, path: &Path) {
@@ -99,6 +100,14 @@ impl BuilderGui {
             return Err("No maps to process.".to_string());
         }
 
+        if self
+            .maps
+            .iter()
+            .all(|map| map.status == MapStatus::Completed)
+        {
+            return Err("All maps already processed.".to_string());
+        }
+
         self.processing = true;
         self.process_status = ProcessingStatus::ScanMaps;
 
@@ -122,6 +131,7 @@ impl BuilderGui {
         game_dir: PathBuf,
         output_dir: PathBuf,
     ) {
+        log::info!("Start processing {} maps.", maps_clone.len());
         let mut u_assets = UniqueAssets::default();
         let mut last_processed: u32;
 
@@ -134,6 +144,7 @@ impl BuilderGui {
                 let mut app = app_mutex.lock().unwrap();
                 app.maps[idx].status = MapStatus::Processing;
             }
+            log::info!("Start process {}", map.name);
             if let Err(err) = parsers::vmf::get_uniques(&map.path, &mut u_assets) {
                 let mut app = app_mutex.lock().unwrap();
                 app.maps[idx].status = MapStatus::Error(ErrorReason::VmfError(err));
@@ -185,11 +196,31 @@ impl BuilderGui {
             let mut app = app_mutex.lock().unwrap();
             app.process_status = ProcessingStatus::CopyAssets;
         }
-        // TODO! Remove expect, fix that later!
-        utils::copy_files(&models_paths, &output_dir, "models").expect("Failed to copy models");
-        utils::copy_files(&materials_paths, &output_dir, "materials")
-            .expect("Failed to copy materials");
-        utils::copy_files(&sounds_paths, &output_dir, "sound").expect("Failed to copy sounds");
+
+        if let Err(err) = utils::copy_files(&models_paths, &output_dir, "models") {
+            BuilderGui::process_error(app_mutex, format!("Failed to copy models: {}", err));
+            return;
+        }
+        if let Err(err) = utils::copy_files(&materials_paths, &output_dir, "materials") {
+            BuilderGui::process_error(app_mutex, format!("Failed to copy materials: {}", err));
+            return;
+        }
+        if let Err(err) = utils::copy_files(&sounds_paths, &output_dir, "sound") {
+            BuilderGui::process_error(app_mutex, format!("Failed to copy sounds: {}", err));
+            return;
+        }
+
+        let mut app = app_mutex.lock().unwrap();
+        app.processing = false;
+    }
+
+    fn process_error(app_mutex: Arc<Mutex<BuilderGui>>, error_info: String) {
+        log::error!("{}", error_info);
+        {
+            let mut app = app_mutex.lock().unwrap();
+            app.process_status = ProcessingStatus::CopyError(error_info);
+        }
+        sleep(std::time::Duration::from_secs(4));
 
         let mut app = app_mutex.lock().unwrap();
         app.processing = false;

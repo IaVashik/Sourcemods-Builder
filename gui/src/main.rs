@@ -4,16 +4,16 @@ mod app;
 mod enums;
 mod ui;
 
-use std::sync::{Arc, Mutex};
 use app::BuilderGui;
 use eframe::{self, egui};
 use log::LevelFilter;
+use std::sync::{Arc, Mutex};
 
 const WIN_SIZE_X: f32 = if cfg!(target_os = "linux") { 330.0 } else { 500.0 };
 const WIN_SIZE_Y: f32 = if cfg!(target_os = "linux") { 450.0 } else { 675.0 };
 
 fn main() {
-    sourcemods_builder::utils::setup_logger(LevelFilter::Info).unwrap();
+    sourcemods_builder::utils::setup_logger(LevelFilter::Debug).unwrap();
 
     let options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
@@ -39,10 +39,10 @@ fn main() {
                 gui_state: gui_clone, // Clone Arc for GuiApp
             }))
         }),
-    ).expect("Failed to run GUI app");
-    
-    let _ = gui_state.lock().unwrap()
-        .save_config();
+    )
+    .expect("Failed to run GUI app");
+
+    let _ = gui_state.lock().unwrap().save_config();
 }
 
 // Create a wrapper structure for eframe::App that owns Arc<Mutex<BuilderGui>>
