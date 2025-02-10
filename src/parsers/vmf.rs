@@ -1,17 +1,12 @@
 use log::{debug, trace};
-use std::{fs::File, io::Read, path::Path};
+use std::path::Path;
 
 use crate::asset_processor::UniqueAssets;
 pub use vmf_forge::{vmf::world::Solid, VmfError, VmfFile, VmfResult};
 
 /// Extracts unique assets from a VMF file.
 pub fn get_uniques(path: &Path, uasset: &mut UniqueAssets) -> VmfResult<()> {
-    let mut file = File::open(path)?;
-    let mut content = Vec::new();
-    file.read_to_end(&mut content)?;
-    let content = String::from_utf8_lossy(&content);
-
-    let vmf = VmfFile::parse(&content)?;
+    let vmf = VmfFile::open(path)?;
 
     add_unique_models(&vmf, uasset);
     _process_solids(&vmf.world.solids, uasset);
@@ -21,27 +16,25 @@ pub fn get_uniques(path: &Path, uasset: &mut UniqueAssets) -> VmfResult<()> {
 /// Extracts unique model and material names from VMF entities.
 fn add_unique_models(vmf: &VmfFile, uassets: &mut UniqueAssets) {
     debug!("Extracting unique assets from VMF entities...");
-    for ent in &vmf.entities.vec {
-        if let Some(modelname) = ent.key_values.get("model") {
+    for ent in vmf.entities.iter() {
+        if let Some(modelname) = ent.model() {
             if modelname.contains(".vmt") {
-                uassets
-                    .materials_name
+                uassets.materials_name
                     .insert(modelname.replace(".vmt", "").into()); // Add material name
                 continue;
             }
             uassets.models_name.insert(modelname.into());
         }
 
-        // MATERIALS
-        if let Some(material_name) = ent.key_values.get("material") {
+        // MATERIALS (if it is a brush entity)
+        if let Some(material_name) = ent.get("material") {
             uassets.materials_name.insert(material_name.into());
             trace!("Found material from 'material' key: {}", material_name);
         }
-        if let Some(material_name) = ent.key_values.get("texture") {
+        if let Some(material_name) = ent.get("texture") {
             uassets.materials_name.insert(material_name.into());
             trace!("Found material from 'texture' key: {}", material_name);
         }
-
         if let Some(solids) = &ent.solids {
             _process_solids(solids, uassets);
         }
