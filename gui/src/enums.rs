@@ -1,4 +1,5 @@
 #![allow(dead_code)]
+use serde::{Deserialize, Serialize};
 
 use std::{
     borrow::Cow,
@@ -8,13 +9,14 @@ use std::{
 
 use sourcemods_builder::parsers::vmf::VmfError;
 
-#[derive(Clone, PartialEq, Eq, Debug, Default)]
+#[derive(Clone, PartialEq, Eq, Debug, Default, Serialize, Deserialize)]
 pub enum ProcessingStatus {
     #[default]
     ScanMaps,
     SearchAssets,
     CopyAssets,
     CopyError(String),
+    Completed,
 }
 
 impl Display for ProcessingStatus {
@@ -24,6 +26,7 @@ impl Display for ProcessingStatus {
             ProcessingStatus::SearchAssets => "Searching Assets...",
             ProcessingStatus::CopyAssets => "Copying Assets...",
             ProcessingStatus::CopyError(info) => info,
+            ProcessingStatus::Completed => "",
         };
         write!(f, "{}", status_str)
     }
@@ -36,6 +39,12 @@ pub enum MapStatus {
     Warning(WarningReason),
     Error(ErrorReason),
     Completed,
+}
+
+impl Default for MapStatus {
+    fn default() -> Self {
+        MapStatus::Pending
+    }
 }
 
 #[derive(Clone, PartialEq, Eq, Debug)]
@@ -85,10 +94,11 @@ impl MapStatus {
     }
 }
 
-#[derive(Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Map {
     pub path: PathBuf,
     pub name: String,
+    #[serde(skip)]
     pub status: MapStatus,
     pub is_vmf: bool,
 }

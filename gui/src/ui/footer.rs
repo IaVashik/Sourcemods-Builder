@@ -5,23 +5,24 @@ use super::UiExt;
 
 pub fn build(ui: &mut Ui, app: &mut App) {
     ui.horizontal(|ui| {
-        let diff_unique = app.unique_assets - app.unique_assets_ui;
-        let diff_found = app.assets_found - app.assets_found_ui;
+        let internal = &app.internal;
+        let diff_unique = internal.unique_assets - internal.unique_assets_ui;
+        let diff_found = internal.assets_found - internal.assets_found_ui;
 
         // Dynamic increment step. The greater the difference, the greater the step.
         if diff_unique > 0 {
             let increment_unique = (diff_unique / 10).max(1);
-            app.unique_assets_ui += increment_unique;
+            app.internal.unique_assets_ui += increment_unique;
         }
         if diff_found > 0 {
             let increment_found = (diff_found / 10).max(1);
-            app.assets_found_ui += increment_found;
+            app.internal.assets_found_ui += increment_found;
         }
 
         ui.label_sized(
             format!(
                 "{} unique assets | {} assets found",
-                app.unique_assets_ui, app.assets_found_ui
+                app.internal.unique_assets_ui, app.internal.assets_found_ui
             ),
             8.0,
         );

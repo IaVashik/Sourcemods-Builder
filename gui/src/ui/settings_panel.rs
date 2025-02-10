@@ -22,12 +22,12 @@ pub fn build(ui: &mut Ui, app: &mut App) {
                         ui.available_width() - button_width - spacing,
                         ui.spacing().interact_size.y,
                     ),
-                    egui::TextEdit::singleline(&mut app.config.game_dir),
+                    egui::TextEdit::singleline(&mut app.game_dir),
                 )
                 .labelled_by(name_label.id);
                 if ui.button("Browse").clicked() {
                     if let Some(path) = FileDialog::new().pick_folder() {
-                        app.config.game_dir = path.display().to_string();
+                        app.game_dir = path.display().to_string();
                     }
                 }
             },
@@ -44,12 +44,12 @@ pub fn build(ui: &mut Ui, app: &mut App) {
                         ui.available_width() - button_width - spacing,
                         ui.spacing().interact_size.y,
                     ),
-                    egui::TextEdit::singleline(&mut app.config.output_dir),
+                    egui::TextEdit::singleline(&mut app.output_dir),
                 )
                 .labelled_by(name_label.id);
                 if ui.button("Browse").clicked() {
                     if let Some(path) = FileDialog::new().pick_folder() {
-                        app.config.output_dir = path.display().to_string();
+                        app.output_dir = path.display().to_string();
                     }
                 }
             },

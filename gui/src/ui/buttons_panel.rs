@@ -1,10 +1,8 @@
-use std::sync::{Arc, Mutex};
-
 use crate::app::BuilderGui as App;
 use eframe::egui::{self};
 use rfd::FileDialog;
 
-pub fn build(ui: &mut egui::Ui, app: &mut App, app_mutex: Arc<Mutex<App>>) {
+pub fn build(ui: &mut egui::Ui, app: &mut App) {
     ui.horizontal(|ui| {
         if !app.processing {
             ui.with_layout(egui::Layout::left_to_right(egui::Align::Center), |ui| {
@@ -32,13 +30,7 @@ pub fn build(ui: &mut egui::Ui, app: &mut App, app_mutex: Arc<Mutex<App>>) {
                 ui.add_enabled(false, button);
                 ui.add(egui::widgets::Spinner::new());
             } else if ui.button("Start Process").clicked() {
-                if let Err(err) = app.process_maps(app_mutex) {
-                    rfd::MessageDialog::new()
-                        .set_description(&err)
-                        .set_level(rfd::MessageLevel::Error)
-                        .set_title("Error")
-                        .show();
-                }
+                app.start_processing();
             }
         });
     });

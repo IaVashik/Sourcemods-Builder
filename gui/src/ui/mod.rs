@@ -1,4 +1,4 @@
-use crate::GuiApp as AppWrapper;
+use crate::app::BuilderGui as App;
 use eframe::egui;
 use egui::{CentralPanel, Context, RichText};
 
@@ -18,10 +18,8 @@ impl UiExt for egui::Ui {
     }
 }
 
-pub fn build_ui(ctx: &Context, app_wrapper: &mut AppWrapper) {
+pub fn build_ui(ctx: &Context, app: &mut App) {
     ctx.set_pixels_per_point(1.5);
-    // Get MutexGuard to access BuilderGui
-    let mut app = app_wrapper.gui_state.lock().unwrap();
 
     ctx.input(|i| {
         if !app.processing && !i.raw.dropped_files.is_empty() {
@@ -30,8 +28,8 @@ pub fn build_ui(ctx: &Context, app_wrapper: &mut AppWrapper) {
     });
 
     CentralPanel::default().show(ctx, |ui| {
-        menu_bar::build(ui, &mut app);
-        settings_panel::build(ui, &mut app);
+        menu_bar::build(ui, app);
+        settings_panel::build(ui, app);
         ui.separator();
 
         // Small hint
@@ -46,10 +44,10 @@ pub fn build_ui(ctx: &Context, app_wrapper: &mut AppWrapper) {
             ui.separator();
         });
 
-        buttons_panel::build(ui, &mut app, app_wrapper.gui_state.clone());
+        buttons_panel::build(ui, app);
         ui.separator();
 
-        map_list_panel::build(ui, &mut app);
-        footer::build(ui, &mut app);
+        map_list_panel::build(ui, app);
+        footer::build(ui, app);
     });
 }
