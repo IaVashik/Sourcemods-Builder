@@ -1,6 +1,6 @@
 use crate::app::BuilderGui as App;
 use crate::enums::MapStatus;
-use eframe::egui::{self, Layout, RichText, ScrollArea};
+use eframe::egui::{self, Layout, ScrollArea};
 
 use super::UiExt;
 
@@ -10,14 +10,11 @@ pub fn build(ui: &mut egui::Ui, app: &mut App) {
         ui.set_width(ui.available_width());
 
         if app.maps.is_empty() {
-            ui.with_layout(Layout::top_down(egui::Align::Center), |ui| {
-                ui.add_space(40.0);
-                ui.label(
-                    RichText::new("Drag-and-drop maps onto the window!")
-                        .monospace()
-                        .small_raised(),
-                );
-            });
+            ui.add_space(40.0);
+            ui.label_size_centered(
+                "Drag-and-drop maps onto the window!",
+                10.0
+            );
             return;
         }
 
@@ -29,22 +26,26 @@ pub fn build(ui: &mut egui::Ui, app: &mut App) {
                     match map.status {
                         MapStatus::Processing => {
                             ui.add(egui::widgets::Spinner::new().size(12.0))
-                                .on_hover_text("Processing...");
+                                .on_hover_text("Processing...")
+                                .on_hover_cursor(egui::CursorIcon::Progress);
                         }
                         _ => {
                             ui.label_sized(map.status.to_string(), 8.0)
-                                .on_hover_text(map.status.get_hover_text());
+                                .on_hover_text(map.status.get_hover_text())
+                                .on_hover_cursor(egui::CursorIcon::Help);
                         }
                     };
                     ui.label(&map.name);
 
-                    if !app.processing {
-                        ui.with_layout(Layout::right_to_left(egui::Align::Center), |ui| {
-                            if ui.small_button("🗑").clicked() {
-                                indices_to_remove.push(index);
-                            };
-                        });
+                    if app.processing {
+                        return;
                     }
+
+                    ui.with_layout(Layout::right_to_left(egui::Align::Center), |ui| {
+                        if ui.small_button("🗑").clicked() {
+                            indices_to_remove.push(index);
+                        };
+                    });
                 });
             }
 

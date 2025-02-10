@@ -4,34 +4,45 @@ use rfd::FileDialog;
 
 pub fn build(ui: &mut egui::Ui, app: &mut App) {
     ui.horizontal(|ui| {
-        if !app.processing {
-            ui.with_layout(egui::Layout::left_to_right(egui::Align::Center), |ui| {
-                if ui.button("Add").clicked() {
-                    if let Some(paths) = FileDialog::new()
-                        .add_filter("Source Maps", &["vmf", "bsp"])
-                        .pick_files()
-                    {
-                        for path in paths {
-                            app.add_map(&path);
-                        }
-                    }
-                }
-                if ui.button("Clear").clicked() {
-                    app.clear_maps();
-                }
-            });
-        } else {
-            ui.label(app.process_status.to_string());
+        build_left_ui(ui, app);
+        build_right_ui(ui, app);
+    });
+}
+
+fn build_left_ui(ui: &mut egui::Ui, app: &mut App) {
+    if app.processing {
+        ui.label(app.process_status.to_string())
+            .on_hover_cursor(egui::CursorIcon::Wait);
+        return;
+    } 
+    
+    ui.with_layout(egui::Layout::left_to_right(egui::Align::Center), |ui| {
+        if ui.button("Add").clicked() {
+            let dialog = FileDialog::new()
+                .add_filter("Source Maps", &["vmf", "bsp"])
+                .pick_files();
+            if let Some(paths) = dialog {
+                let _ = paths.iter().map(|path| app.add_map(path));
+            }
+        }
+        if ui.button("Clear").clicked() {
+            app.clear_maps();
+        }
+    });
+
+}
+
+fn build_right_ui(ui: &mut egui::Ui, app: &mut App) {
+    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+        if app.processing {
+            let button = egui::Button::new("Processing...");
+            ui.add_enabled(false, button);
+            ui.add(egui::widgets::Spinner::new())
+                .on_hover_cursor(egui::CursorIcon::Progress);
         }
 
-        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-            if app.processing {
-                let button = egui::Button::new("Processing...");
-                ui.add_enabled(false, button);
-                ui.add(egui::widgets::Spinner::new());
-            } else if ui.button("Start Process").clicked() {
-                app.start_processing();
-            }
-        });
+        else if ui.button("Start Process").clicked() {
+            app.start_processing();
+        }
     });
 }

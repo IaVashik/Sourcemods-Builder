@@ -25,6 +25,7 @@ pub struct BuilderGui {
     pub internal: InternalData,
 
     #[cfg(debug_assertions)]
+    #[serde(skip)]
     pub debug_hover: bool,
 }
 
@@ -35,13 +36,6 @@ pub struct InternalData {
     pub unique_assets_ui: u32,
     pub assets_found_ui: u32,
 }
-
-// #[derive(Default)]
-// pub struct Processing {
-//     pub start_processing: bool,
-//     pub process_status: ProcessingStatus,
-//     pub processing: bool,
-// }
 
 impl eframe::App for BuilderGui {
     fn update(&mut self, ctx: &eframe::egui::Context, _frame: &mut eframe::Frame) {
@@ -64,17 +58,15 @@ impl BuilderGui {
     }
 
     pub fn save_config(&self) -> Result<(), confy::ConfyError> {
+        log::info!("Saving data...");
         confy::store("sourcemods_builder", "config", &self)
     }
 
+    #[rustfmt::skip]
     pub fn start_processing(&mut self) {
         let _ = self.save_config(); // autosave :p
 
-        if self
-            .maps
-            .iter()
-            .all(|map| map.status == MapStatus::Completed)
-        {
+        if self.maps.iter().all(|map| map.status == MapStatus::Completed) {
             rfd::MessageDialog::new()
                 .set_description("All maps already processed")
                 .set_level(rfd::MessageLevel::Warning)

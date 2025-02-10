@@ -1,22 +1,15 @@
 use crate::app::BuilderGui as App;
 use eframe::egui;
-use egui::{CentralPanel, Context, RichText};
+use egui::{CentralPanel, Context};
 
 mod buttons_panel;
 mod footer;
 mod map_list_panel;
 mod menu_bar;
 mod settings_panel;
+mod ext;
 
-trait UiExt {
-    fn label_sized(&mut self, text: impl Into<String>, size: f32) -> egui::Response;
-}
-
-impl UiExt for egui::Ui {
-    fn label_sized(&mut self, text: impl Into<String>, size: f32) -> egui::Response {
-        self.label(RichText::new(text.into()).size(size))
-    }
-}
+pub use ext::UiExt;
 
 pub fn build_ui(ctx: &Context, app: &mut App) {
     ctx.set_pixels_per_point(1.5);
@@ -33,16 +26,14 @@ pub fn build_ui(ctx: &Context, app: &mut App) {
         ui.separator();
 
         // Small hint
-        ui.with_layout(egui::Layout::top_down(egui::Align::Center), |ui| {
-            ui.label_sized(
-                "Automatically collect assets used in your Source Engine maps.",
-                10.0,
-            );
-            ui.label_sized("1. Set 'Game Dir' and 'Output Dir'.", 10.0);
-            ui.label_sized("2. Drag & drop maps or use 'Add' button.", 10.0);
-            ui.add_space(20.0);
-            ui.separator();
-        });
+        ui.label_size_centered(
+            "Automatically collect assets used in your Source Engine maps.",
+            10.0,
+        );
+        ui.label_size_centered("1. Set 'Game Dir' and 'Output Dir'.", 10.0);
+        ui.label_size_centered("2. Drag & drop maps or use 'Add' button.", 10.0);
+        ui.add_space(20.0);
+        ui.separator();
 
         buttons_panel::build(ui, app);
         ui.separator();
