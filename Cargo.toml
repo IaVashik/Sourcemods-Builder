@@ -1,6 +1,6 @@
 [package]
 name = "sourcemods-builder"
-version = "1.0.0"
+version = "1.1.0"
 edition = "2021"
 authors = ["laVashik <contact@lavashik.lol>"]
 description = "Sourcemod Builder is a utility designed to drastically simplify the process of building and distributing Source Engine mods"
