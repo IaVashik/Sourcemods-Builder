@@ -66,7 +66,7 @@ impl BuilderGui {
     pub fn start_processing(&mut self) {
         let _ = self.save_config(); // autosave :p
 
-        if self.maps.iter().all(|map| map.status == MapStatus::Completed) {
+        if self.maps.iter().all(|map| matches!(map.status, MapStatus::Completed)) {
             rfd::MessageDialog::new()
                 .set_description("All maps already processed")
                 .set_level(rfd::MessageLevel::Warning)
@@ -89,14 +89,8 @@ impl BuilderGui {
                 return;
             }
 
-            if ext == "vmf" {
-                let map = Map::new(path, true);
-                self.maps.push(map);
-            }
-            // TODO DEV CODE: because bsp is not supported at the moment.
-            if ext == "bsp" {
-                let mut map = Map::new(path, false);
-                map.status = MapStatus::Warning(WarningReason::BspNotSupportNow);
+            if ext == "vmf" || ext == "bsp" {
+                let map = Map::new(path, ext == "vmf");
                 self.maps.push(map);
             }
         }

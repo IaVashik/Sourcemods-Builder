@@ -41,9 +41,6 @@ The executable will be located in `target/release/sourcemod-builder-gui`.
 
 ## Usage
 
-> [!WARNING]  
-> BSP map format processing is currently **not implemented** and therefore **not supported** in this version of Sourcemod Builder
-
 **Command-Line Interface (CLI - `sourcemods-builder`):**
 
 1.  Open your terminal or command prompt.

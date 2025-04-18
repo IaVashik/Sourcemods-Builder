@@ -1,16 +1,16 @@
-use sourcemods_builder::{asset_processor, find_asset_directories, utils};
+use sourcemods_builder::{asset_processor, find_asset_directories};
 use sourcemods_builder::{parsers, UniqueAssets};
 use std::path::{Path, PathBuf};
 use std::sync::mpsc::{self, Receiver, Sender};
 
-use crate::enums::{ErrorReason, Map, MapStatus, ProcessingStatus, WarningReason};
+use crate::enums::{Map, MapStatus, ProcessingStatus, WarningReason};
 
 use super::BuilderGui;
 
 /// Messages sent from the processing thread to the GUI thread.
 pub enum ProcessingMessage {
     /// Update the overall processing status (e.g., ScanMaps, SearchAssets, CopyAssets).
-    ProcessingStatus(ProcessingStatus),
+    SetProcessingStatus(ProcessingStatus),
     /// Update a specific map's status.
     MapStatus { index: usize, status: MapStatus },
     /// Update the count of unique assets.
@@ -58,7 +58,6 @@ impl BuilderGui {
         self.processing_rx = Some(rx);
 
         self.processing = true;
-        self.process_status = ProcessingStatus::ScanMaps;
 
         self.internal.assets_found = 0;
         self.internal.unique_assets = 0;
@@ -82,23 +81,34 @@ impl BuilderGui {
         game_dir: PathBuf,
         output_dir: PathBuf,
     ) {
-        // let _ = tx.send(ProcessingMessage::ProcessingStatus(ProcessingStatus::ScanMaps));
         log::info!("Start processing {} maps.", maps_clone.len());
         let mut u_assets = UniqueAssets::default();
         let mut unique_count: u32 = 0;
 
         for (idx, map) in maps_clone.iter().enumerate() {
-            if !map.is_vmf || map.status == MapStatus::Completed {
+            if matches!(map.status, MapStatus::Completed) {
                 continue;
             }
 
             // Notify GUI that this map processing has started
             change_map_status(&tx, idx, MapStatus::Processing);
+            let _ = tx.send(ProcessingMessage::SetProcessingStatus(
+                ProcessingStatus::ScanMap(idx),
+            ));
             log::info!("Processing map {}", map.name);
 
-            // Extract unique assets from the VMF file
-            if let Err(err) = parsers::vmf::get_uniques(&map.path, &mut u_assets) {
-                change_map_status(&tx, idx, MapStatus::Error(ErrorReason::VmfError(err)));
+            let parse_result: Result<(), String> = if map.is_vmf {
+                // Extract unique assets from the VMF file
+                u_assets.parse_vmf(&map.path)
+                    .map_err(|err| err.to_string()) 
+            } else {
+                // Extract unique assets from the BSP file
+                u_assets.parse_bsp(&map.path)
+                    .map_err(|err| err.to_string())
+            };
+
+            if let Err(err_string) = parse_result {
+                change_map_status(&tx, idx, MapStatus::Error(err_string));
                 continue;
             }
 
@@ -117,7 +127,7 @@ impl BuilderGui {
         }
 
         // Notify GUI that asset search is starting
-        let _ = tx.send(ProcessingMessage::ProcessingStatus(
+        let _ = tx.send(ProcessingMessage::SetProcessingStatus(
             ProcessingStatus::SearchAssets,
         ));
 
@@ -146,7 +156,7 @@ impl BuilderGui {
         //-- Endregion
 
         // Notify GUI that asset copying is starting
-        let _ = tx.send(ProcessingMessage::ProcessingStatus(
+        let _ = tx.send(ProcessingMessage::SetProcessingStatus(
             ProcessingStatus::CopyAssets,
         ));
 
@@ -178,7 +188,7 @@ impl BuilderGui {
             // Process all available messages without blocking
             for msg in rx.try_iter() {
                 match msg {
-                    ProcessingMessage::ProcessingStatus(status) => {
+                    ProcessingMessage::SetProcessingStatus(status) => {
                         // Update overall processing status
                         self.process_status = status;
                     }

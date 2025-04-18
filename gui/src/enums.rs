@@ -2,17 +2,14 @@
 use serde::{Deserialize, Serialize};
 
 use std::{
-    borrow::Cow,
-    fmt::Display,
-    path::{Path, PathBuf},
+    borrow::Cow, fmt::Display, path::{Path, PathBuf}
 };
-
-use sourcemods_builder::parsers::vmf::VmfError;
 
 #[derive(Clone, PartialEq, Eq, Debug, Default, Serialize, Deserialize)]
 pub enum ProcessingStatus {
     #[default]
-    ScanMaps,
+    Idle,
+    ScanMap(usize),
     SearchAssets,
     CopyAssets,
     CopyError(String),
@@ -22,11 +19,11 @@ pub enum ProcessingStatus {
 impl Display for ProcessingStatus {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let status_str = match self {
-            ProcessingStatus::ScanMaps => "Scanning Maps...",
+            ProcessingStatus::ScanMap(_) => "Scanning Maps...",
             ProcessingStatus::SearchAssets => "Searching Assets...",
             ProcessingStatus::CopyAssets => "Copying Assets...",
             ProcessingStatus::CopyError(info) => info,
-            ProcessingStatus::Completed => "",
+            _ => ""
         };
         write!(f, "{}", status_str)
     }
@@ -37,7 +34,7 @@ pub enum MapStatus {
     Pending,
     Processing,
     Warning(WarningReason),
-    Error(ErrorReason),
+    Error(String),
     Completed,
 }
 
@@ -49,16 +46,8 @@ impl Default for MapStatus {
 
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub enum WarningReason {
-    BspNotSupportNow, // temp
     NotFoundAssets,
-    Unknown,
-}
-
-#[derive(Clone, PartialEq, Eq, Debug)]
-pub enum ErrorReason {
-    IoError(std::io::ErrorKind),
-    VmfError(VmfError),
-    Unknown,
+    Unknown, // never created? lmao
 }
 
 impl Display for MapStatus {
@@ -75,19 +64,14 @@ impl Display for MapStatus {
 }
 
 impl MapStatus {
-    pub fn get_hover_text(&self) -> Cow<'static, str> {
+    pub fn get_hover_text<'a>(&'a self) -> Cow<'a, str> {
         match self {
             MapStatus::Pending => "Pending".into(),
             MapStatus::Warning(reason) => match reason {
-                WarningReason::BspNotSupportNow => ".bsp format not supported now".into(),
                 WarningReason::NotFoundAssets => "New unique Assets not found in this map".into(),
                 WarningReason::Unknown => "Unknown warning".into(),
             },
-            MapStatus::Error(reason) => match reason {
-                ErrorReason::IoError(error_kind) => error_kind.to_string().into(),
-                ErrorReason::VmfError(vmf_error) => vmf_error.to_string().into(),
-                ErrorReason::Unknown => "Unknown error".into(),
-            },
+            MapStatus::Error(err_msg) => Cow::Borrowed(err_msg), // never use btw
             MapStatus::Completed => "Completed".into(),
             _ => "".into(),
         }

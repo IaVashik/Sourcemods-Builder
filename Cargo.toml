@@ -14,8 +14,9 @@ members = [
 ]
 
 [dependencies]
-vmf-forge = "0.3.0"
-vmdl = "0.2.0"
+vmf-forge = "0.4.0"
+vbsp = { git = "https://github.com/IaVashik/vbsp-v21" } # temp workaround
+vmdl = "0.2.0" # have one issue
 clap = { version = "4.5.27", features = ["derive"] }
 walkdir = "2"
 

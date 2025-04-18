@@ -18,8 +18,8 @@ pub enum BuilderError {
     IoError(#[from] std::io::Error),
     #[error("VMF parsing error: {0}")]
     VmfParseError(#[from] vmf_forge::VmfError),
-    // #[error("BSP parsing error: {0}")] // todo Add this later when BSP parser is implemented
-    // BspParseError(#[from] bsp_parser::error::BspError),
+    #[error("BSP parsing error: {0}")]
+    BspParseError(#[from] vbsp::error::BspError),
     #[error("Generic error: {0}")]
     GenericError(String), // For other types of errors
 }

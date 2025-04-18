@@ -5,6 +5,8 @@
 //! within the game directory.
 
 use log::info;
+use vbsp::BspResult;
+use vmf_forge::VmfResult;
 use std::{
     collections::HashSet,
     path::{Path, PathBuf},
@@ -36,8 +38,8 @@ impl UniqueAssets {
 
             if let Some(ext) = path.extension().and_then(|s| s.to_str()) {
                 match ext {
-                    "vmf" if process_vmf => vmf::get_uniques(path, &mut u_assets)?, // Parse VMF file
-                    "bsp" if process_bsp => bsp::get_uniques(path, &mut u_assets)?, // Parse BSP file
+                    "vmf" if process_vmf => u_assets.parse_vmf(path)?, // Parse VMF file
+                    "bsp" if process_bsp => u_assets.parse_bsp(path)?, // Parse BSP file
                     _ => continue,
                 }
             }
@@ -48,12 +50,12 @@ impl UniqueAssets {
         Ok(u_assets)
     }
 
-    pub fn parse_vmf(vmf_path: &Path, u_assets: &mut UniqueAssets) -> BuilderResult<()> {
-        Ok(vmf::get_uniques(vmf_path, u_assets)?)
+    pub fn parse_vmf(&mut self, vmf_path: &Path) -> VmfResult<()> {
+        vmf::get_uniques(vmf_path, self)
     }
 
-    pub fn parse_bsp(bsp_path: &Path, u_assets: &mut UniqueAssets) -> BuilderResult<()> {
-        Ok(bsp::get_uniques(bsp_path, u_assets)?)
+    pub fn parse_bsp(&mut self, bsp_path: &Path) -> BspResult<()> {
+        bsp::get_uniques(bsp_path, self)
     }
 
     pub fn is_empty(&self) -> bool {
