@@ -1,11 +1,12 @@
-use log::{debug, trace};
+use log::trace;
 use std::path::Path;
 
 use crate::asset_processor::UniqueAssets;
-pub use vmf_forge::{vmf::world::Solid, VmfError, VmfFile, VmfResult};
+use vmf_forge::{vmf::world::Solid, VmfFile, VmfResult};
 
 /// Extracts unique assets from a VMF file.
 pub fn get_uniques(path: &Path, uasset: &mut UniqueAssets) -> VmfResult<()> {
+    trace!("Attempting to read and parse VMF file: {}", path.display()); 
     let vmf = VmfFile::open(path)?;
 
     add_unique_models(&vmf, uasset);
@@ -15,10 +16,9 @@ pub fn get_uniques(path: &Path, uasset: &mut UniqueAssets) -> VmfResult<()> {
 
 /// Extracts unique model and material names from VMF entities.
 fn add_unique_models(vmf: &VmfFile, uassets: &mut UniqueAssets) {
-    debug!("Extracting unique assets from VMF entities...");
     for ent in vmf.entities.iter() {
-        if let Some(modelname) = ent.model() {
-            if modelname.contains(".vmt") {
+        if let Some(modelname) = ent.get("model") {
+            if modelname.ends_with(".vmt") || modelname.ends_with(".spr") {
                 uassets.materials_name
                     .insert(modelname.replace(".vmt", "").into()); // Add material name
                 continue;
@@ -40,10 +40,14 @@ fn add_unique_models(vmf: &VmfFile, uassets: &mut UniqueAssets) {
         }
 
         // SOUNDS
+        let suffixes = [".wav", ".mp3", ".ogg", ".flac"];
         for value in ent.key_values.values() {
-            if value.contains(".wav") {
-                uassets.sounds_name.insert(value.into());
+            if suffixes.iter().any(|suffix| {
+                value.len() >= suffix.len() &&
+                value[value.len() - suffix.len()..].eq_ignore_ascii_case(suffix)
+            }) {
                 trace!("Found sound: {}", value);
+                uassets.sounds_name.insert(value.into());
             }
         }
     }
