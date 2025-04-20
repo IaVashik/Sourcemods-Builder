@@ -21,8 +21,10 @@ pub fn build(ui: &mut Ui, app: &mut App) {
 
         ui.label_sized(
             format!(
-                "{} unique assets | {} assets found",
-                app.internal.unique_assets_ui, app.internal.assets_found_ui
+                "{maps} maps | {uassets} unique assets | {founded} assets found",
+                maps = app.maps.len(), 
+                uassets = app.internal.unique_assets_ui, 
+                founded = app.internal.assets_found_ui
             ),
             8.0,
         );

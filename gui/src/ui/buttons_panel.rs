@@ -11,8 +11,16 @@ pub fn build(ui: &mut egui::Ui, app: &mut App) {
 
 fn build_left_ui(ui: &mut egui::Ui, app: &mut App) {
     if app.processing {
-        ui.label(app.process_status.to_string())
-            .on_hover_cursor(egui::CursorIcon::Wait);
+        ui.horizontal(|ui| {
+            ui.label(app.process_status.to_string())
+                .on_hover_cursor(egui::CursorIcon::Wait);
+            match app.process_status {
+                crate::enums::ProcessingStatus::ScanMap(idx) => {
+                    ui.label(&format!("{idx}/{total}", total = app.maps.len()));
+                },
+                _ => {}
+            }
+        });
         return;
     } 
     
