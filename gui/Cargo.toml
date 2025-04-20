@@ -9,8 +9,9 @@ path = "src/main.rs"
 
 [dependencies]
 sourcemods-builder = { path="../" }
-eframe = "0.29.0" # 0.30.0 now has a critical bug with TextEdit 
-egui-theme-switch = "=0.2.1"
+
+eframe = "0.31.1" 
+catppuccin-egui = { version = "5.5.0", default-features = false, features = ["egui31"] }
 rfd = "0.15"
 confy = "0.6.1"
 serde = { version = "1.0", features = ["derive"] }

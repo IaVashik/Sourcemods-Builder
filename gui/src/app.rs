@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use std::path::Path;
 use std::sync::mpsc::Receiver;
 
-use crate::enums::{Map, MapStatus, ProcessingStatus, WarningReason};
+use crate::enums::{Map, MapStatus, ProcessingStatus};
 use crate::ui;
 
 mod processing;
@@ -13,6 +13,7 @@ pub struct BuilderGui {
     pub game_dir: String,
     pub output_dir: String,
     pub maps: Vec<Map>,
+    pub theme: ui::themes::Themes,
 
     #[serde(skip)]
     pub process_status: ProcessingStatus,
