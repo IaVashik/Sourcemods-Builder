@@ -9,7 +9,7 @@ pub fn build(ui: &mut egui::Ui, app: &mut App) {
         ui.set_height(ui.available_height().max(22.) - 20.0);
         ui.set_width(ui.available_width());
 
-        if app.maps.is_empty() {
+        if app.config.maps.is_empty() {
             ui.add_space(10.0);
             ui.label_size_centered(
                 "Drag-and-drop maps onto the window!",
@@ -27,7 +27,7 @@ pub fn build(ui: &mut egui::Ui, app: &mut App) {
         scroll_area.show(ui, |ui| {
             let mut indices_to_remove = Vec::new();
 
-            for (index, map) in app.maps.iter().enumerate() {
+            for (index, map) in app.config.maps.iter().enumerate() {
                 let item_response = ui.horizontal(|ui| {
                     match &map.status {
                         MapStatus::Processing => {

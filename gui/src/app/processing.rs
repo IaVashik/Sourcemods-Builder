@@ -43,12 +43,12 @@ where
 
 impl BuilderGui {
     pub fn process_maps(&mut self) -> Result<(), String> {
-        let game_path = Path::new(&self.game_dir).to_path_buf();
-        let output_path = Path::new(&self.output_dir).to_path_buf();
+        let game_path = Path::new(&self.config.game_dir).to_path_buf();
+        let output_path = Path::new(&self.config.output_dir).to_path_buf();
         // We don't have map_dir, using game_path as a workaround
         sourcemods_builder::check_directories(&game_path, &game_path, &output_path)?;
 
-        if self.maps.is_empty() {
+        if self.config.maps.is_empty() {
             return Err("No maps to process.".to_string());
         }
 
@@ -194,7 +194,7 @@ impl BuilderGui {
                     }
                     ProcessingMessage::MapStatus { index, status } => {
                         // Update the status of a specific map if the index is valid
-                        if let Some(map) = self.maps.get_mut(index) {
+                        if let Some(map) = self.config.maps.get_mut(index) {
                             map.status = status;
                         }
                     }

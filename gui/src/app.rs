@@ -1,6 +1,7 @@
 use processing::ProcessingMessage;
 use serde::{Deserialize, Serialize};
 use std::path::Path;
+use std::sync;
 use std::sync::mpsc::Receiver;
 
 use crate::enums::{Map, MapStatus, ProcessingStatus};
@@ -8,26 +9,27 @@ use crate::ui;
 
 mod processing;
 
-#[derive(Default, Serialize, Deserialize)]
+#[derive(Default)]
 pub struct BuilderGui {
+    pub config: StorageSettings,
+    pub process_status: ProcessingStatus,
+    pub processing: bool,
+    pub processing_rx: Option<Receiver<ProcessingMessage>>,
+    pub processing_cancel_flag: Option<sync::Arc<sync::atomic::AtomicBool>>,
+
+    pub internal: InternalData,
+
+    #[cfg(debug_assertions)]
+    pub debug_hover: bool,
+}
+
+#[derive(Default, Serialize, Deserialize)]
+pub struct StorageSettings {
     pub game_dir: String,
     pub output_dir: String,
     pub maps: Vec<Map>,
     pub theme: ui::themes::Themes,
 
-    #[serde(skip)]
-    pub process_status: ProcessingStatus,
-    #[serde(skip)]
-    pub processing: bool,
-    #[serde(skip)]
-    pub processing_rx: Option<Receiver<ProcessingMessage>>,
-
-    #[serde(skip)]
-    pub internal: InternalData,
-
-    #[cfg(debug_assertions)]
-    #[serde(skip)]
-    pub debug_hover: bool,
 }
 
 #[derive(Default)]
@@ -55,19 +57,23 @@ impl eframe::App for BuilderGui {
 
 impl BuilderGui {
     pub fn new() -> Self {
-        confy::load("sourcemods_builder", "config").unwrap_or_default()
+        let config = confy::load("sourcemods_builder", "config").unwrap_or_default();
+        Self {
+            config,
+            ..Default::default()
+        }
     }
 
     pub fn save_config(&self) -> Result<(), confy::ConfyError> {
         log::info!("Saving data...");
-        confy::store("sourcemods_builder", "config", &self)
+        confy::store("sourcemods_builder", "config", &self.config)
     }
 
     #[rustfmt::skip]
     pub fn start_processing(&mut self) {
         let _ = self.save_config(); // autosave :p
 
-        if self.maps.iter().all(|map| matches!(map.status, MapStatus::Completed)) {
+        if self.config.maps.iter().all(|map| matches!(map.status, MapStatus::Completed)) {
             rfd::MessageDialog::new()
                 .set_description("All maps already processed")
                 .set_level(rfd::MessageLevel::Warning)
@@ -86,13 +92,13 @@ impl BuilderGui {
 
     pub fn add_map(&mut self, path: &Path) {
         if let Some(ext) = path.extension().and_then(|s| s.to_str()) {
-            if self.maps.iter().any(|map| map.path == path) {
+            if self.config.maps.iter().any(|map| map.path == path) {
                 return;
             }
 
             if ext == "vmf" || ext == "bsp" {
                 let map = Map::new(path, ext == "vmf");
-                self.maps.push(map);
+                self.config.maps.push(map);
             }
         }
     }
@@ -105,11 +111,11 @@ impl BuilderGui {
     }
 
     pub fn clear_maps(&mut self) {
-        self.maps.clear();
+        self.config.maps.clear();
     }
 
     pub fn remove_map(&mut self, index: usize) {
-        self.maps.remove(index);
+        self.config.maps.remove(index);
     }
 
     pub fn handle_dropped_files(&mut self, files: &[eframe::egui::DroppedFile]) {

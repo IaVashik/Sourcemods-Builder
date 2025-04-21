@@ -8,7 +8,7 @@ pub fn build(ui: &mut egui::Ui, app: &mut App) {
             egui::ScrollArea::vertical()
                 .max_height(152.)
                 .show(ui, |ui| {
-                    let theme: &mut Themes = &mut app.theme;
+                    let theme: &mut Themes = &mut app.config.theme;
                     ui.selectable_value(theme, Themes::DefaultDark, Themes::DefaultDark.as_str());
                     ui.selectable_value(theme, Themes::DefaultLight, Themes::DefaultLight.as_str());
                     ui.separator();

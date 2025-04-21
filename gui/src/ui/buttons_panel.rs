@@ -16,7 +16,7 @@ fn build_left_ui(ui: &mut egui::Ui, app: &mut App) {
                 .on_hover_cursor(egui::CursorIcon::Wait);
             match app.process_status {
                 crate::enums::ProcessingStatus::ScanMap(idx) => {
-                    ui.label(&format!("{idx}/{total}", total = app.maps.len()));
+                    ui.label(&format!("{idx}/{total}", total = app.config.maps.len()));
                 },
                 _ => {}
             }

@@ -14,7 +14,7 @@ pub use ext::UiExt;
 
 pub fn build_ui(ctx: &Context, app: &mut App) {
     ctx.set_pixels_per_point(1.5);
-    app.theme.apply(ctx);
+    app.config.theme.apply(ctx); // todo do it only if changed!
 
     ctx.input(|i| {
         if !app.processing && !i.raw.dropped_files.is_empty() {
