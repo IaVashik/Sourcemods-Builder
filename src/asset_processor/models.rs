@@ -29,7 +29,7 @@ pub fn process(u_assets: &mut UniqueAssets, models_dirs: &Vec<PathBuf>) -> Vec<P
 
             // Process materials from MDL file
             let data = fs::read(&path).unwrap_or_default();
-            if let Ok(info) = Mdl::read(&data) {
+            if let Ok(info) = Mdl::read(&data) { // todo [panic]: not yet implemented: read animation from animation block
                 for info in info.textures {
                     for up in info.search_paths {
                         let relative_path = PathBuf::from(up).join(&info.name);

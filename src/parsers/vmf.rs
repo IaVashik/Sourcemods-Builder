@@ -42,9 +42,14 @@ fn add_unique_models(vmf: &VmfFile, uassets: &mut UniqueAssets) {
         // SOUNDS
         let suffixes = [".wav", ".mp3", ".ogg", ".flac"];
         for value in ent.key_values.values() {
+            let value_bytes = value.as_bytes();
+            let value_len = value_bytes.len();
+        
             if suffixes.iter().any(|suffix| {
-                value.len() >= suffix.len() &&
-                value[value.len() - suffix.len()..].eq_ignore_ascii_case(suffix)
+                let suffix_bytes = suffix.as_bytes();
+                let suffix_len = suffix_bytes.len();
+                value_len >= suffix_len &&
+                value_bytes[value_len - suffix_len..].eq_ignore_ascii_case(suffix_bytes)
             }) {
                 trace!("Found sound: {}", value);
                 uassets.sounds_name.insert(value.into());

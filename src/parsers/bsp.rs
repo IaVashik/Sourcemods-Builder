@@ -83,10 +83,15 @@ fn add_unique_models(bsp: &Bsp, uassets: &mut UniqueAssets) {
             } 
 
             // Process Sounds
-            let suffixes = [".wav", ".mp3", ".ogg", ".flac"];
+            let suffixes = [".wav", ".mp3", ".ogg", ".flac"]; // todo MOVE IT
+            let value_bytes = value.as_bytes();
+            let value_len = value_bytes.len();
+        
             if suffixes.iter().any(|suffix| {
-                value.len() >= suffix.len() &&
-                value[value.len() - suffix.len()..].eq_ignore_ascii_case(suffix)
+                let suffix_bytes = suffix.as_bytes();
+                let suffix_len = suffix_bytes.len();
+                value_len >= suffix_len &&
+                value_bytes[value_len - suffix_len..].eq_ignore_ascii_case(suffix_bytes)
             }) {
                 trace!("Found sound: {}", value);
                 uassets.sounds_name.insert(value.into());
