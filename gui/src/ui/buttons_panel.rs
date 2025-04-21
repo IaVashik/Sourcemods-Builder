@@ -43,8 +43,9 @@ fn build_left_ui(ui: &mut egui::Ui, app: &mut App) {
 fn build_right_ui(ui: &mut egui::Ui, app: &mut App) {
     ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
         if app.processing {
-            let button = egui::Button::new("Processing...");
-            ui.add_enabled(false, button);
+            if ui.button("Abort").clicked() {
+                app.cancel_compile()
+            }
             ui.add(egui::widgets::Spinner::new())
                 .on_hover_cursor(egui::CursorIcon::Progress);
         }

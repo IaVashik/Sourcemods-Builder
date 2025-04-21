@@ -6,8 +6,6 @@ use rfd::FileDialog;
 const BUTTON_WIDTH: f32 = 50.0;
 
 pub fn build(ui: &mut Ui, app: &mut App) {
-    #[allow(deprecated)]
-    ui.set_enabled(!app.processing);
     let spacing = ui.spacing().item_spacing.x * 2.;
 
     // Game Dir

@@ -13,6 +13,7 @@ pub enum ProcessingStatus {
     SearchAssets,
     CopyAssets,
     ProcessingError(String),
+    Cancelled,
     Completed,
 }
 

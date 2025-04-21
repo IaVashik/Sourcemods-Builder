@@ -1,7 +1,10 @@
 use sourcemods_builder::find_asset_directories;
 use sourcemods_builder::UniqueAssets;
 use std::path::{Path, PathBuf};
+use std::sync::atomic::AtomicBool;
+use std::sync::atomic::Ordering;
 use std::sync::mpsc::{self, Receiver, Sender};
+use std::sync::Arc;
 
 use crate::enums::{Map, MapStatus, ProcessingStatus, WarningReason};
 
@@ -40,7 +43,6 @@ fn extract_panic_message(payload: Box<dyn std::any::Any + Send + 'static>) -> St
     }
 }
 
-
 // Helper function to process assets and send the count to the GUI.
 fn process_and_send<T, F>(process_fn: F, tx: &Sender<ProcessingMessage>) -> Vec<T>
 where
@@ -55,7 +57,7 @@ where
 }
 
 impl BuilderGui {
-    pub fn process_maps(&mut self) -> Result<(), String> {
+    pub fn process_maps(&mut self, cancel_flag: Arc<AtomicBool>) -> Result<(), String> {
         let game_path = Path::new(&self.config.game_dir).to_path_buf();
         let output_path = Path::new(&self.config.output_dir).to_path_buf();
         // We don't have map_dir, using game_path as a workaround
@@ -81,7 +83,7 @@ impl BuilderGui {
 
         std::thread::spawn(move || {
             if let Err(err) = std::panic::catch_unwind(|| {
-                BuilderGui::_process_maps(&tx, maps_clone, game_path, output_path);
+                BuilderGui::_process_maps(&tx, maps_clone, game_path, output_path, cancel_flag);
             }) {
                 let err = extract_panic_message(err);
                 let msg = format!(
@@ -107,15 +109,17 @@ impl BuilderGui {
         maps_clone: Vec<Map>,
         game_dir: PathBuf,
         output_dir: PathBuf,
+        is_cancelled: Arc<AtomicBool>
     ) {
         log::info!("Start processing {} maps.", maps_clone.len());
         let mut u_assets = UniqueAssets::default();
         let mut unique_count: u32 = 0;
 
         for (idx, map) in maps_clone.iter().enumerate() {
-            if matches!(map.status, MapStatus::Completed) {
-                continue;
-            }
+            // is should canceled?
+            if is_cancelled.load(Ordering::SeqCst) { return }
+            // is already processed?
+            if matches!(map.status, MapStatus::Completed) { continue }
 
             // Notify GUI that this map processing has started
             change_map_status(&tx, idx, MapStatus::Processing);
@@ -160,6 +164,7 @@ impl BuilderGui {
 
         // Locate asset directories
         let (models_dirs, materials_dirs, sounds_dirs) = find_asset_directories(&game_dir);
+        if is_cancelled.load(Ordering::SeqCst) { return }
 
         //-- region: processing paths
         // Process models using the helper function
@@ -180,6 +185,7 @@ impl BuilderGui {
 
         // If new unique assets were found during the processing, we update count in GUI
         let _ = tx.send(ProcessingMessage::UniqueAssetsCount(u_assets.len() as u32));
+        if is_cancelled.load(Ordering::SeqCst) { return }
         //-- Endregion
 
         // Notify GUI that asset copying is starting
@@ -212,6 +218,8 @@ impl BuilderGui {
     /// GUI update method to process messages from the processing thread.
     /// This function should be called regularly in your UI update loop.
     pub fn poll_processing_events(&mut self) {
+        let mut is_cancelled = false;
+
         // Process messages if the receiver exists
         if let Some(rx) = &self.processing_rx {
             // Process all available messages without blocking
@@ -243,7 +251,7 @@ impl BuilderGui {
                             .set_title("Processing Error!")
                             .show();
                         self.process_status = ProcessingStatus::ProcessingError(err);
-                        self.processing = false;
+                        is_cancelled = true;
                     }
                     ProcessingMessage::Complete => {
                         // Mark processing as completed
@@ -252,6 +260,10 @@ impl BuilderGui {
                     }
                 }
             }
+        }
+
+        if is_cancelled {
+            self.cancel_compile();
         }
     }
 }

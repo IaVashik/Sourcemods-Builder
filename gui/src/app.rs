@@ -81,12 +81,36 @@ impl BuilderGui {
             return;
         }
 
-        if let Err(err) = self.process_maps() {
+        let cancel_flag = sync::Arc::new(sync::atomic::AtomicBool::new(false));
+        self.processing_cancel_flag = Some(cancel_flag.clone());
+
+        if let Err(err) = self.process_maps(cancel_flag) {
             rfd::MessageDialog::new()
                 .set_description(&err)
                 .set_level(rfd::MessageLevel::Error)
                 .set_title("Error")
                 .show();
+        }
+    }
+
+    pub fn cancel_compile(&mut self) {
+        if let Some(cancel_flag) = &self.processing_cancel_flag {
+            cancel_flag.store(true, sync::atomic::Ordering::SeqCst);
+        }
+
+        // Update GUI state to reflect cancellation
+        self.processing = false;
+        self.process_status = ProcessingStatus::Cancelled;
+
+        // Clear backend receiver and cancel flag to reset compilation state.
+        self.processing_rx = None;
+        self.processing_cancel_flag = None;
+
+        // Reset maps status to pending if they were processing
+        for m in self.config.maps.iter_mut() {
+            if let MapStatus::Processing = m.status {
+                m.status = MapStatus::Pending;
+            }
         }
     }
 
@@ -112,6 +136,8 @@ impl BuilderGui {
 
     pub fn clear_maps(&mut self) {
         self.config.maps.clear();
+        self.internal.unique_assets = 0;
+        self.internal.unique_assets_ui = 0;
     }
 
     pub fn remove_map(&mut self, index: usize) {

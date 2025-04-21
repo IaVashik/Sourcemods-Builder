@@ -24,7 +24,7 @@ pub fn build_ui(ctx: &Context, app: &mut App) {
 
     CentralPanel::default().show(ctx, |ui| {
         menu_bar::build(ui, app);
-        settings_panel::build(ui, app);
+        ui.add_enabled_ui(!app.processing, |ui| settings_panel::build(ui, app));
         ui.separator();
 
         // Small hint
