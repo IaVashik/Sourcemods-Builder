@@ -12,7 +12,7 @@ pub enum ProcessingStatus {
     ScanMap(usize),
     SearchAssets,
     CopyAssets,
-    CopyError(String),
+    ProcessingError(String),
     Completed,
 }
 
@@ -22,7 +22,7 @@ impl Display for ProcessingStatus {
             ProcessingStatus::ScanMap(_) => "Scanning Maps...",
             ProcessingStatus::SearchAssets => "Searching Assets...",
             ProcessingStatus::CopyAssets => "Copying Assets...",
-            ProcessingStatus::CopyError(info) => info,
+            ProcessingStatus::ProcessingError(info) => info,
             _ => ""
         };
         write!(f, "{}", status_str)

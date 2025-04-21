@@ -1,5 +1,5 @@
-use sourcemods_builder::{asset_processor, find_asset_directories};
-use sourcemods_builder::{parsers, UniqueAssets};
+use sourcemods_builder::find_asset_directories;
+use sourcemods_builder::UniqueAssets;
 use std::path::{Path, PathBuf};
 use std::sync::mpsc::{self, Receiver, Sender};
 
@@ -27,6 +27,19 @@ pub enum ProcessingMessage {
 fn change_map_status(tx: &Sender<ProcessingMessage>, index: usize, status: MapStatus) {
     let _ = tx.send(ProcessingMessage::MapStatus { index, status });
 }
+
+fn extract_panic_message(payload: Box<dyn std::any::Any + Send + 'static>) -> String {
+    if let Some(s) = payload.downcast_ref::<&'static str>() {
+        s.to_string()
+    }
+    else if let Some(s) = payload.downcast_ref::<String>() {
+        s.clone() 
+    }
+    else {
+        "Unknown.".to_string()
+    }
+}
+
 
 // Helper function to process assets and send the count to the GUI.
 fn process_and_send<T, F>(process_fn: F, tx: &Sender<ProcessingMessage>) -> Vec<T>
@@ -64,10 +77,24 @@ impl BuilderGui {
         self.internal.assets_found_ui = 0;
         self.internal.unique_assets_ui = 0;
 
-        let maps_clone = self.maps.clone();
+        let maps_clone = self.config.maps.clone(); // It's not the best idea, but it works for now
 
         std::thread::spawn(move || {
-            BuilderGui::_process_maps(tx, maps_clone, game_path, output_path);
+            if let Err(err) = std::panic::catch_unwind(|| {
+                BuilderGui::_process_maps(&tx, maps_clone, game_path, output_path);
+            }) {
+                let err = extract_panic_message(err);
+                let msg = format!(
+                    "A critical error occurred during map processing! \
+                    This is likely a bug. Please report it to the repository with the following details:\n\n\
+                    Panic information: {err:?}\n\n\
+                    Steps to reproduce (if known):\n\
+                    1. Describe what you were doing when the error occurred.\n\
+                    2. Provide the map files or configuration that caused the issue.\n\n\
+                    Thank you for helping us improve the application! ;>"
+                );
+                let _ = tx.send(ProcessingMessage::Error(msg));
+            }
         });
 
         Ok(())
@@ -76,7 +103,7 @@ impl BuilderGui {
     /// The processing function running in a background thread.
     #[rustfmt::skip]
     pub fn _process_maps(
-        tx: Sender<ProcessingMessage>,
+        tx: &Sender<ProcessingMessage>,
         maps_clone: Vec<Map>,
         game_dir: PathBuf,
         output_dir: PathBuf,
@@ -180,6 +207,8 @@ impl BuilderGui {
         let _ = tx.send(ProcessingMessage::Complete);
     }
 
+
+
     /// GUI update method to process messages from the processing thread.
     /// This function should be called regularly in your UI update loop.
     pub fn poll_processing_events(&mut self) {
@@ -207,8 +236,13 @@ impl BuilderGui {
                         self.internal.assets_found += count;
                     }
                     ProcessingMessage::Error(err) => {
-                        // Set error state and stop processing
-                        self.process_status = ProcessingStatus::CopyError(err);
+                        // Drop error message, set error state and stop processing
+                        rfd::MessageDialog::new()
+                            .set_description(&err)
+                            .set_level(rfd::MessageLevel::Error)
+                            .set_title("Processing Error!")
+                            .show();
+                        self.process_status = ProcessingStatus::ProcessingError(err);
                         self.processing = false;
                     }
                     ProcessingMessage::Complete => {
