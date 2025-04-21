@@ -32,7 +32,6 @@ pub struct StorageSettings {
     pub output_dir: String,
     pub maps: Vec<Map>,
     pub theme: ui::themes::Themes,
-
 }
 
 #[derive(Default)]
@@ -41,6 +40,7 @@ pub struct InternalData {
     pub assets_found: u32,
     pub unique_assets_ui: u32,
     pub assets_found_ui: u32,
+    pub theme_was_changed: bool,
 }
 
 impl eframe::App for BuilderGui {
@@ -61,10 +61,12 @@ impl eframe::App for BuilderGui {
 impl BuilderGui {
     pub fn new() -> Self {
         let config = confy::load("sourcemods_builder", "config").unwrap_or_default();
-        Self {
+        let mut app = Self {
             config,
             ..Default::default()
-        }
+        };
+        app.internal.theme_was_changed = true; // a little hack
+        app
     }
 
     pub fn save_config(&self) -> Result<(), confy::ConfyError> {
