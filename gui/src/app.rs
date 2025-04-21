@@ -21,6 +21,9 @@ pub struct BuilderGui {
 
     #[cfg(debug_assertions)]
     pub debug_hover: bool,
+
+    // additionals windows
+    pub about_window_open: bool,
 }
 
 #[derive(Default, Serialize, Deserialize)]

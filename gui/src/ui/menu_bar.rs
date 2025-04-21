@@ -30,7 +30,7 @@ pub fn build(ui: &mut egui::Ui, app: &mut App) {
             }
         });
         if ui.button("About").clicked() {
-
+            app.about_window_open = true;
         }
     });
 }

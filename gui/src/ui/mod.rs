@@ -2,12 +2,13 @@ use crate::app::BuilderGui as App;
 use eframe::egui;
 use egui::{CentralPanel, Context};
 
+mod about_window;
 mod buttons_panel;
+mod ext;
 mod footer;
 mod map_list_panel;
 mod menu_bar;
 mod settings_panel;
-mod ext;
 pub mod themes;
 
 pub use ext::UiExt;
@@ -21,6 +22,15 @@ pub fn build_ui(ctx: &Context, app: &mut App) {
             app.handle_dropped_files(&i.raw.dropped_files);
         }
     });
+
+    // Process additional/immediate windows
+    if app.about_window_open {
+        ext::show_viewport_immediate(ctx, "About", [340., 380.], |ctx, _| {
+            if about_window::show_about_window(ctx) {
+                app.about_window_open = false;
+            }
+        })
+    }
 
     CentralPanel::default().show(ctx, |ui| {
         menu_bar::build(ui, app);
