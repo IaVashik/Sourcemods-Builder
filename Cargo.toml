@@ -1,7 +1,7 @@
 [package]
 name = "sourcemods-builder"
-version = "1.1.0"
-edition = "2021"
+version = "1.2.0"
+edition = "2024"
 authors = ["laVashik <contact@lavashik.lol>"]
 description = "Sourcemod Builder is a utility designed to drastically simplify the process of building and distributing Source Engine mods"
 readme = "README.md"
@@ -15,16 +15,16 @@ members = [
 
 [dependencies]
 vmf-forge = "0.4.0"
-vbsp = { git = "https://github.com/IaVashik/vbsp-v21" } # temp workaround
+vbsp = "0.9.1"
 vmdl = "0.2.0" # have one issue
-clap = { version = "4.5.27", features = ["derive"] }
+clap = { version = "4.5.37", features = ["derive"] }
 walkdir = "2"
 
-log = "0.4"
+log = "0.4.27"
 colored = "3.0.0" 
 fern = "0.7.0"
 regex = "1.11.1"
-thiserror = "2.0.11"
+thiserror = "2.0.12"
 
 # [lints.rust]
 # unused = { level = "allow", priority = -1 } # For exploratory dev.

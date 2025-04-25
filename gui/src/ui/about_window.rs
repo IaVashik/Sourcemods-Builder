@@ -61,11 +61,11 @@ pub fn show_about_window(ctx: &egui::Context) -> bool {
                 ui.add_space(5.0);
                 ui.columns(3, |columns| {
                     columns[0].label_sized("• VMF/BSP Parsing", 8.);
-                    columns[0].label_sized("• Model Collection", 8.);
-                    columns[1].label_sized("• Material/Texture Collection", 8.);
-                    columns[1].label_sized("• Sound Collection", 8.);
+                    columns[0].label_sized("• GUI & CLI Available", 8.);
+                    columns[1].label_sized("• Asset Collection", 8.);
+                    columns[1].label_sized("• Faster Mod Builds", 8.);
+                    columns[2].label_sized("• High-Speed Processing", 8.);
                     columns[2].label_sized("• Case-Insensitive Handling", 8.);
-                    columns[2].label_sized("• GUI & CLI Available", 8.);
                 });
             });
             ui.add_space(8.0);
@@ -174,7 +174,7 @@ pub fn show_about_window(ctx: &egui::Context) -> bool {
             // Copyright (frfr)
             ui.horizontal(|ui| {
                 ui.label(
-                    RichText::new("Copyright © 2025 laVashik")
+                    RichText::new("Copyright © 2025 laVashik :P")
                         .small()
                         .color(ui.visuals().weak_text_color()),
                 );
