@@ -2,11 +2,11 @@ use log::trace;
 use std::path::Path;
 
 use crate::asset_processor::UniqueAssets;
-use vmf_forge::{vmf::world::Solid, VmfFile, VmfResult};
+use vmf_forge::{VmfFile, VmfResult, vmf::world::Solid};
 
 /// Extracts unique assets from a VMF file.
 pub fn get_uniques(path: &Path, uasset: &mut UniqueAssets) -> VmfResult<()> {
-    trace!("Attempting to read and parse VMF file: {}", path.display()); 
+    trace!("Attempting to read and parse VMF file: {}", path.display());
     let vmf = VmfFile::open(path)?;
 
     add_unique_models(&vmf, uasset);
@@ -19,7 +19,8 @@ fn add_unique_models(vmf: &VmfFile, uassets: &mut UniqueAssets) {
     for ent in vmf.entities.iter() {
         if let Some(modelname) = ent.get("model") {
             if modelname.ends_with(".vmt") || modelname.ends_with(".spr") {
-                uassets.materials_name
+                uassets
+                    .materials_name
                     .insert(modelname.replace(".vmt", "").into()); // Add material name
                 continue;
             }
@@ -44,12 +45,12 @@ fn add_unique_models(vmf: &VmfFile, uassets: &mut UniqueAssets) {
         for value in ent.key_values.values() {
             let value_bytes = value.as_bytes();
             let value_len = value_bytes.len();
-        
+
             if suffixes.iter().any(|suffix| {
                 let suffix_bytes = suffix.as_bytes();
                 let suffix_len = suffix_bytes.len();
-                value_len >= suffix_len &&
-                value_bytes[value_len - suffix_len..].eq_ignore_ascii_case(suffix_bytes)
+                value_len >= suffix_len
+                    && value_bytes[value_len - suffix_len..].eq_ignore_ascii_case(suffix_bytes)
             }) {
                 trace!("Found sound: {}", value);
                 uassets.sounds_name.insert(value.into());

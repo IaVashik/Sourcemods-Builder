@@ -5,16 +5,16 @@
 //! within the game directory.
 
 use log::info;
-use vbsp::BspResult;
-use vmf_forge::VmfResult;
 use std::{
     collections::HashSet,
     path::{Path, PathBuf},
 };
+use vbsp::BspResult;
+use vmf_forge::VmfResult;
 
+use crate::BuilderResult;
 use crate::parsers::{bsp, vmf};
 use crate::utils;
-use crate::BuilderResult;
 
 pub mod materials;
 pub mod models;

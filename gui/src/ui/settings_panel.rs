@@ -1,6 +1,6 @@
+use super::UiExt;
 use crate::app::BuilderGui as App;
 use eframe::egui::{Ui, Vec2};
-use super::UiExt;
 use rfd::FileDialog;
 
 const BUTTON_WIDTH: f32 = 50.0;
@@ -21,7 +21,7 @@ pub fn build(ui: &mut Ui, app: &mut App) {
     });
 
     // Output Dir
-    ui.horizontal(|ui| {                
+    ui.horizontal(|ui| {
         ui.label("Output Dir:");
         ui.singleline_on_screen(&mut app.config.output_dir, BUTTON_WIDTH + spacing);
         if ui.button("Browse").clicked() {

@@ -8,7 +8,7 @@ use log::{error, info, warn};
 mod config;
 use sourcemods_builder::utils;
 use sourcemods_builder::{
-    asset_processor, check_directories, find_asset_directories, UniqueAssets,
+    UniqueAssets, asset_processor, check_directories, find_asset_directories,
 };
 
 fn main() {

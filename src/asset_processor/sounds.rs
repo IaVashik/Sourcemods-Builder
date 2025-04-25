@@ -1,4 +1,4 @@
-use super::{utils, PathBuf, UniqueAssets};
+use super::{PathBuf, UniqueAssets, utils};
 use log::debug;
 
 /// Processes sound assets, finding sound files.

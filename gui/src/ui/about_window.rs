@@ -12,10 +12,10 @@ fn icon_label(ui: &mut egui::Ui, icon: char, text: &str) {
 }
 
 pub fn show_about_window(ctx: &egui::Context) -> bool {
-    let mut should_closed = false; 
+    let mut should_closed = false;
     let section_frame = Frame::group(ctx.style().as_ref())
-        .inner_margin(Margin::same(10)) 
-        .fill(ctx.style().visuals.faint_bg_color); 
+        .inner_margin(Margin::same(10))
+        .fill(ctx.style().visuals.faint_bg_color);
 
     egui::CentralPanel::default()
         .frame(Frame::central_panel(&ctx.style()).inner_margin(Margin::same(15)))
@@ -156,7 +156,7 @@ pub fn show_about_window(ctx: &egui::Context) -> bool {
                         github_link.highlight();
                     }
                 });
-                
+
                 ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                     let license_link = ui.add(egui::Hyperlink::from_label_and_url(
                         RichText::new("📜 License (MIT)").color(ui.visuals().hyperlink_color),

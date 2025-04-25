@@ -1,4 +1,4 @@
-use super::{utils, HashSet, PathBuf, UniqueAssets};
+use super::{HashSet, PathBuf, UniqueAssets, utils};
 use log::debug;
 use regex::Regex;
 use std::sync::OnceLock;

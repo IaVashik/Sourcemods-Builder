@@ -17,13 +17,13 @@ fn build_left_ui(ui: &mut egui::Ui, app: &mut App) {
             match app.process_status {
                 crate::enums::ProcessingStatus::ScanMap(idx) => {
                     ui.label(&format!("{idx}/{total}", total = app.config.maps.len()));
-                },
+                }
                 _ => {}
             }
         });
         return;
-    } 
-    
+    }
+
     ui.with_layout(egui::Layout::left_to_right(egui::Align::Center), |ui| {
         if ui.button("Add").clicked() {
             let dialog = FileDialog::new()
@@ -37,7 +37,6 @@ fn build_left_ui(ui: &mut egui::Ui, app: &mut App) {
             app.clear_maps();
         }
     });
-
 }
 
 fn build_right_ui(ui: &mut egui::Ui, app: &mut App) {
@@ -48,9 +47,7 @@ fn build_right_ui(ui: &mut egui::Ui, app: &mut App) {
             }
             ui.add(egui::widgets::Spinner::new())
                 .on_hover_cursor(egui::CursorIcon::Progress);
-        }
-
-        else if ui.button("Start Process").clicked() {
+        } else if ui.button("Start Process").clicked() {
             app.start_processing();
         }
     });

@@ -2,7 +2,9 @@
 use serde::{Deserialize, Serialize};
 
 use std::{
-    borrow::Cow, fmt::Display, path::{Path, PathBuf}
+    borrow::Cow,
+    fmt::Display,
+    path::{Path, PathBuf},
 };
 
 #[derive(Clone, PartialEq, Eq, Debug, Default, Serialize, Deserialize)]
@@ -24,7 +26,7 @@ impl Display for ProcessingStatus {
             ProcessingStatus::SearchAssets => "Searching Assets...",
             ProcessingStatus::CopyAssets => "Copying Assets...",
             ProcessingStatus::ProcessingError(info) => info,
-            _ => ""
+            _ => "",
         };
         write!(f, "{}", status_str)
     }

@@ -1,10 +1,10 @@
-use sourcemods_builder::find_asset_directories;
 use sourcemods_builder::UniqueAssets;
+use sourcemods_builder::find_asset_directories;
 use std::path::{Path, PathBuf};
+use std::sync::Arc;
 use std::sync::atomic::AtomicBool;
 use std::sync::atomic::Ordering;
 use std::sync::mpsc::{self, Receiver, Sender};
-use std::sync::Arc;
 
 use crate::enums::{Map, MapStatus, ProcessingStatus, WarningReason};
 
@@ -34,11 +34,9 @@ fn change_map_status(tx: &Sender<ProcessingMessage>, index: usize, status: MapSt
 fn extract_panic_message(payload: Box<dyn std::any::Any + Send + 'static>) -> String {
     if let Some(s) = payload.downcast_ref::<&'static str>() {
         s.to_string()
-    }
-    else if let Some(s) = payload.downcast_ref::<String>() {
-        s.clone() 
-    }
-    else {
+    } else if let Some(s) = payload.downcast_ref::<String>() {
+        s.clone()
+    } else {
         "Unknown.".to_string()
     }
 }
@@ -212,8 +210,6 @@ impl BuilderGui {
         // Notify GUI that processing is complete
         let _ = tx.send(ProcessingMessage::Complete);
     }
-
-
 
     /// GUI update method to process messages from the processing thread.
     /// This function should be called regularly in your UI update loop.
