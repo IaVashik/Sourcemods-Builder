@@ -1,5 +1,4 @@
 use super::{PathBuf, UniqueAssets, utils};
-use log::debug;
 
 /// Processes sound assets, finding sound files.
 pub fn process(u_assets: &UniqueAssets, sounds_dirs: &Vec<PathBuf>) -> Vec<PathBuf> {
@@ -7,16 +6,30 @@ pub fn process(u_assets: &UniqueAssets, sounds_dirs: &Vec<PathBuf>) -> Vec<PathB
 
     for dir in sounds_dirs {
         for sound in &u_assets.sounds_name {
-            let mut path = dir.join(sound);
-            if !utils::ensure_correct_path(&mut path) {
-                continue;
-            }
+            #[cfg(not(unix))]
+            let path = dir.join(sound);
+            #[cfg(unix)] // Source engine is not case-sensitive, unlike unix-like filesystems
+            let path = match utils::find_asset_case_insensitive(dir, sound) {
+                Ok(Some(correct_path)) => correct_path,
+                Ok(None) => continue,
+                Err(e) => {
+                    log::warn!(
+                        "Error searching for asset {} in {}: {}",
+                        sound.display(),
+                        dir.display(),
+                        e
+                    );
+                    continue;
+                }
+            };
 
-            sounds_paths.push(path);
+            if path.exists() {
+                sounds_paths.push(path);
+            }
         }
     }
 
-    debug!(
+    log::debug!(
         "Sound processing finished. Found {} sound paths.",
         sounds_paths.len()
     );

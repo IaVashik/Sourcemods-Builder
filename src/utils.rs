@@ -5,7 +5,7 @@ use fern::Dispatch;
 use regex::Regex;
 use std::{
     fs, io,
-    path::{Path, PathBuf},
+    path::{Component, Path, PathBuf},
 };
 use walkdir::{DirEntry, WalkDir};
 
@@ -50,23 +50,6 @@ pub fn find_all_groups_in_file(file_path: &Path, re: &Regex) -> io::Result<Vec<S
     Ok(matches)
 }
 
-/// Ensures the correctness of a file path (case-insensitive).
-pub fn ensure_correct_path(path: &mut PathBuf) -> bool {
-    if path.exists() {
-        return true;
-    }
-    if path.exists_no_case().unwrap_or(false) {
-        if let Some(corrected_path) = path.find_case_insensitive().unwrap_or(None) {
-            *path = corrected_path; // Update path with corrected case
-        } else {
-            return false;
-        }
-        true
-    } else {
-        false
-    }
-}
-
 /// Constructs a destination path for copied files.
 fn get_path(path: &Path, output_dir: &Path, base_folder: &str) -> io::Result<PathBuf> {
     let relative_path = path
@@ -92,38 +75,89 @@ pub fn copy_files(paths: &Vec<PathBuf>, output_dir: &Path, base_folder: &str) ->
     Ok(())
 }
 
-/// Trait extension for PathBuf for case-insensitive operations.
-pub trait PathBufCaseExt {
-    fn exists_no_case(&self) -> io::Result<bool>;
-    fn find_case_insensitive(&self) -> io::Result<Option<PathBuf>>;
-}
+/// Attempts to locate an asset by its relative path within a given base directory,
+/// performing a case-insensitive search for each path component.
+///
+/// This is useful for environments like Linux where the filesystem is case-sensitive,
+/// but asset references might not match the exact casing.
+///
+/// # Arguments
+///
+/// * `base_dir` - The known-correct base directory where the search should start (e.g., `/path/to/game/materials`).
+/// * `relative_asset_path` - The relative path of the asset to find (e.g., `Brick/Wall01.vtf`), potentially with incorrect casing.
+///
+/// # Returns
+///
+/// * `Ok(Some(PathBuf))` - If the asset is found, returns the full path with the correct casing.
+/// * `Ok(None)` - If the asset or any intermediate directory component cannot be found case-insensitively.
+/// * `Err(io::Error)` - If an I/O error occurs during directory traversal (e.g., permissions).
+#[cfg(unix)]
+pub fn find_asset_case_insensitive(
+    base_dir: &Path,
+    relative_asset_path: &Path,
+) -> io::Result<Option<PathBuf>> {
+    let mut current_path = base_dir.to_path_buf();
 
-impl PathBufCaseExt for PathBuf {
-    fn exists_no_case(&self) -> io::Result<bool> {
-        Ok(self.find_case_insensitive()?.is_some())
-    }
-
-    fn find_case_insensitive(&self) -> io::Result<Option<PathBuf>> {
-        let file_name = match self.file_name().and_then(|name| name.to_str()) {
-            Some(name) => name.to_lowercase(),
-            None => return Ok(None), // If no filename, return None.
+    // Iterate through each component of the relative path.
+    for component in relative_asset_path.components() {
+        let component_os_str = match component {
+            Component::Normal(name) => name,
+            // *Skip other component types like CurDir (.), ParentDir (..) for this relative search.
+            _ => continue,
         };
 
-        let parent_dir = match self.parent() {
-            Some(dir) => dir,
-            None => return Ok(None), // If no parent directory, return None.
+        // Prepare the component name for case-insensitive comparison.
+        let target_name_lower = match component_os_str.to_str() {
+            Some(s) => s.to_lowercase(),
+            None => {
+                log::warn!(
+                    "Path component contains non-UTF8 characters: {:?}",
+                    component_os_str
+                );
+                return Ok(None); // todo: Or implement OsStr comparison logic?
+            }
         };
 
-        for entry in fs::read_dir(parent_dir)? {
-            let entry = entry?;
-            let entry_name = entry.file_name().to_string_lossy().to_lowercase();
-            if entry_name == file_name {
-                return Ok(Some(entry.path())); // Return path with correct casing
+        let mut found_match = false;
+        // Read the contents of the current directory to find the next component.
+        match fs::read_dir(&current_path) {
+            Ok(entries) => {
+                for entry_result in entries {
+                    let entry = entry_result?;
+                    let entry_os_name = entry.file_name();
+                    let entry_name_str_lower = entry_os_name.to_string_lossy().to_lowercase();
+
+                    if entry_name_str_lower == target_name_lower {
+                        // Found a match. Update `current_path` to the actual path of the found entry.
+                        current_path = entry.path();
+                        found_match = true;
+                        break;
+                    }
+                }
+            }
+            // Handle specific error kinds gracefully.
+            Err(e) if e.kind() == io::ErrorKind::NotFound => {
+                return Ok(None);
+            }
+            Err(e) => {
+                return Err(e); // Propagate the error.
             }
         }
 
-        Ok(None) // File not found
+        // If no matching entry was found in the directory for the current component.
+        if !found_match {
+            return Ok(None);
+        }
+
+        // Check if the found path is a directory before proceeding to the next component.
+        // This prevents trying to `read_dir` on a file.
+        let is_last_component = component == relative_asset_path.components().last().unwrap();
+        if !is_last_component && !current_path.is_dir() {
+            return Ok(None); // Cannot traverse further. :<
+        }
     }
+
+    Ok(Some(current_path))
 }
 
 pub fn iter_files<P: AsRef<Path>>(path: P) -> impl Iterator<Item = DirEntry> {
