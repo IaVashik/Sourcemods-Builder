@@ -1,5 +1,5 @@
 use super::{HashSet, PathBuf, UniqueAssets, utils};
-use log::{debug, info};
+use log::info;
 use regex::Regex;
 use std::sync::OnceLock;
 
@@ -25,10 +25,7 @@ pub fn process(u_assets: &UniqueAssets, materials_dirs: &Vec<PathBuf>) -> Vec<Pa
     // Search for VMT files based on unique material names.
     for dir in materials_dirs {
         for vmt in &u_assets.materials_name {
-            let mut path = dir.join(vmt).with_extension("vmt");
-            if !utils::ensure_correct_path(&mut path) {
-                continue;
-            }
+            
 
             #[cfg(not(unix))]
             let path = dir.join(vmt).with_extension("vmt");
