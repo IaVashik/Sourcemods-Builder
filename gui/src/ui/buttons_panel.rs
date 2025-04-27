@@ -30,7 +30,9 @@ fn build_left_ui(ui: &mut egui::Ui, app: &mut App) {
                 .add_filter("Source Maps", &["vmf", "bsp"])
                 .pick_files();
             if let Some(paths) = dialog {
-                let _ = paths.iter().map(|path| app.add_map(path));
+                for path in paths {
+                    app.add_map(&path);
+                }
             }
         }
         if ui.button("Clear").clicked() {
