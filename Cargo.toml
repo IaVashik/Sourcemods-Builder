@@ -1,6 +1,6 @@
 [package]
 name = "sourcemods-builder"
-version = "1.2.0"
+version = "1.2.1"
 edition = "2024"
 authors = ["laVashik <contact@lavashik.lol>"]
 description = "Sourcemod Builder is a utility designed to drastically simplify the process of building and distributing Source Engine mods"
@@ -28,3 +28,4 @@ thiserror = "2.0.12"
 
 # [lints.rust]
 # unused = { level = "allow", priority = -1 } # For exploratory dev.
+
