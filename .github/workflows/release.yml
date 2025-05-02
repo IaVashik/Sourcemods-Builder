@@ -1,43 +1,100 @@
-name: Build
+name: Build Release Assets
+
 on:
   release:
     types: [created]
 
 jobs:
-  release:
-    name: release ${{ matrix.target }}
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        target: [x86_64-pc-windows-gnu, x86_64-unknown-linux-musl]
+  # --- Windows Build Job (MSVC) ---
+  release-windows:
+    name: release windows (msvc)
+    runs-on: windows-latest
     env:
       CARGO_PKG_NAME: sourcemods-builder
+      TARGET: x86_64-pc-windows-msvc
     steps:
       # Step 1: Checkout the repository
       - uses: actions/checkout@v3
 
-      # Step 2: Install required dependencies
-      - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y mingw-w64
-
-      # Step 3: Set up Rust toolchain for the target platform
+      # Step 2: Set up Rust toolchain for the MSVC target
       - name: Set up Rust
         uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
-          target: ${{ matrix.target }}
+          target: ${{ env.TARGET }} 
           override: true
 
-      # Step 4: Build main binary
-      - name: Build main binary
-        run: cargo build --release --target ${{ matrix.target }}
+      # Step 3: Build main binary
+      - name: Build main binary (CLI)
+        run: cargo build --release --target ${{ env.TARGET }}
+
+      # Step 4: Build GUI binary
+      - name: Build GUI binary
+        run: cargo build --release --target ${{ env.TARGET }} -p gui
+
+      # Step 5: Create the archives using PowerShell
+      - name: Build archive
+        shell: pwsh
+        run: |
+          # Set the binary name from the CARGO_PKG_NAME env
+          $binary_name = "${{ env.CARGO_PKG_NAME }}"
+          $platform = "windows"
+          $ext = ".exe"
+          $archive_type = ".zip"
+          $target_dir = "target/${{ env.TARGET }}/release" # Define target dir variable
+
+          # --- Archive for CLI ---
+          $cli_archive_name = "$binary_name-$platform$archive_type"
+          # Use Copy-Item instead of cp
+          Copy-Item "$target_dir/$binary_name$ext" .
+          # Use 7z (assuming it's available on the runner)
+          7z a "$cli_archive_name" "$binary_name$ext" README.md
+          # Use Remove-Item instead of rm
+          Remove-Item "$binary_name$ext"
+          # Set environment variable for upload step (PowerShell syntax)
+          echo "ASSET_CLI=$cli_archive_name" >> $env:GITHUB_ENV
+
+          # --- Archive for GUI ---
+          $gui_archive_name = "$binary_name-$platform-gui$archive_type"
+          Copy-Item "$target_dir/$binary_name-gui$ext" .
+          7z a "$gui_archive_name" "$binary_name-gui$ext" README.md
+          Remove-Item "$binary_name-gui$ext"
+          echo "ASSET_GUI=$gui_archive_name" >> $env:GITHUB_ENV
+
+      # Step 6: Upload the Windows release assets to GitHub
+      - name: Upload release assets (Windows)
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            ${{ env.ASSET_CLI }}
+            ${{ env.ASSET_GUI }}
+
+  # --- Linux Build Job (MUSL) ---
+  release-linux:
+    name: release linux (musl)
+    runs-on: ubuntu-latest
+    env:
+      CARGO_PKG_NAME: sourcemods-builder
+      TARGET: x86_64-unknown-linux-musl
+    steps:
+      # Step 1: Checkout the repository
+      - uses: actions/checkout@v3
+
+      # Step 2: Set up Rust toolchain for the target platform
+      - name: Set up Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          target: ${{ env.TARGET }} 
+          override: true
+
+      # Step 3: Build main binary
+      - name: Build main binary (CLI)
+        run: cargo build --release --target ${{ env.TARGET }}
 
       # Step 5: Build GUI binary
       - name: Build GUI binary
-        run: cargo build --release --target ${{ matrix.target }} -p gui
+        run: cargo build --release --target ${{ env.TARGET }} -p gui
 
       # Step 6: Create the archives
       - name: Build archive
@@ -45,43 +102,24 @@ jobs:
         run: |
           # Set the binary name from the CARGO_PKG_NAME env
           binary_name="${{ env.CARGO_PKG_NAME }}"
-
-          # Determine platform name and archive type based on target
-          if [ "${{ matrix.target }}" = "x86_64-pc-windows-gnu" ]; then
-            platform="windows"
-            ext=".exe"
-            archive_type=".zip"
-          else
-            platform="linux"
-            ext=""
-            archive_type=".tar.gz"
-          fi
+          platform="linux"
+          ext="" # No extension for Linux binaries typically
+          archive_type=".tar.gz"
+          target_dir="target/${{ env.TARGET }}/release" 
 
           # --- Archive for CLI ---
           cli_archive_name="$binary_name-$platform$archive_type"
-          if [ "${{ matrix.target }}" = "x86_64-pc-windows-gnu" ]; then
-            cp "target/${{ matrix.target }}/release/$binary_name$ext" .
-            7z a "$cli_archive_name" "$binary_name$ext" README.md
-            rm "$binary_name$ext"
-          else
-            tar -czf "$cli_archive_name" -C "target/${{ matrix.target }}/release" "$binary_name$ext" -C "$(pwd)" README.md
-          fi
+          tar -czf "$cli_archive_name" -C "$target_dir" "$binary_name$ext" -C "$(pwd)" README.md
+          # Set environment variable for upload step (Bash syntax)
           echo "ASSET_CLI=$cli_archive_name" >> $GITHUB_ENV
 
           # --- Archive for GUI ---
           gui_archive_name="$binary_name-$platform-gui$archive_type"
-          if [ "${{ matrix.target }}" = "x86_64-pc-windows-gnu" ]; then
-            cp "target/${{ matrix.target }}/release/$binary_name-gui$ext" .
-            7z a "$gui_archive_name" "$binary_name-gui$ext" README.md
-            rm "$binary_name-gui$ext"
-          else
-            tar -czf "$gui_archive_name" -C "target/${{ matrix.target }}/release" "$binary_name-gui$ext" -C "$(pwd)" README.md
-          fi
+          tar -czf "$gui_archive_name" -C "$target_dir" "$binary_name-gui$ext" -C "$(pwd)" README.md
           echo "ASSET_GUI=$gui_archive_name" >> $GITHUB_ENV
 
-
-      # Step 7: Upload the release asset to GitHub
-      - name: Upload release
+      # Step 7: Upload the Linux release assets to GitHub
+      - name: Upload release assets (Linux)
         uses: softprops/action-gh-release@v1
         with:
           files: |
